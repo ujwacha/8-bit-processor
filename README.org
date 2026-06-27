@@ -1,0 +1,28 @@
+#+TITLE: 8 Bit Processor in Verilog
+#+Author: Ujwol Acharya (079BCT092)
+#+PROPERTY: 
+
+* Introduction
+This whole project is a lab work for Elective 1 FPGA of my univeristy.
+
+* Assignment 1
+the first assignment was to write an ALU in verilog, you can find the code on =src/alu=
+
+The ALU is made in behavioral model, the datapath model alu is also there, but It doesn't work as well as behavioral model
+
+the testbench is in =sim= directory, testbench is in C++
+
+to test you can do =make sim=
+
+to get image representation of CPU you can do =make circ=
+
+to view waveform in gtkwave you can do =make view=
+
+All the features of ALU has been tested with the C++ testbench, I didn't initialiize git from the begining so, for now the testbench code only tests a small portion of ALU but all possible permutations of inputs and states have been tested and have been verified to work well
+
+currently we are in the phase of testing Control unit so you have to uncomment some things in the =Makefile= to test the ALU
+
+
+* Assignment 2
+
+Control unit is still in progress

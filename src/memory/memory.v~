@@ -1,0 +1,11 @@
+module memory(input [7:0]  adress,
+	      input	   clk,
+	      input	   rst,
+	      output [7:0] value);
+
+   reg [255:0] memory_reg [7:0];
+
+   
+   
+   
+endmodule // memory

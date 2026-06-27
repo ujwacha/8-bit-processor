@@ -72,52 +72,48 @@ module alu(input	    clk,
    equal_to   comp_eq (.a(a), .b(b), .out(eq_out));
    less_than  comp_lt (.a(a), .b(b), .out(lt_out));
 
-
-   always @(*) begin
-        case (selector)
-            4'h0: begin
-               out_combo   = add;
-               out_combo_c = add_c;
-            end
-            4'h1: begin
-               out_combo   = subtract;
-               out_combo_c = subtract_c;
-            end
-            4'h2: begin
-               out_combo   = shift_r;
-               out_combo_c = shift_r_c;
-            end
-            4'h3: begin
-               out_combo   = shift_l;
-               out_combo_c = shift_l_c;
-            end
-            4'h4: begin
-               out_combo   = andg;
-               out_combo_c = andg_c;
-            end
-            4'h5: begin
-               out_combo   = org;
-               out_combo_c = org_c;
-            end
-            4'h6: begin
-               out_combo   = notg;
-               out_combo_c = notg_c;
-            end
-            4'h7: begin
-               out_combo   = 8'h00;
-               out_combo_c = eq_out;
-            end
-            4'h8: begin
-               out_combo   = 8'h00;
-               out_combo_c = lt_out;
-            end
-            default: begin
-               out_combo   = 8'h00;
-               out_combo_c = 1'b0;
-            end
-        endcase
-   end
-
+   
+   four_bit_mux selector(.in_bit({
+				  add_c,
+				  subtract_c,
+				  shift_r_c,
+				  shift_l_c,
+				  andg_c,
+				  org_c,
+				  notg_c,
+				  eq_out,
+				  lt_out,
+				  8'h00,
+				  8'h00,
+				  8'h00,
+				  8'h00,
+				  8'h00,
+				  8'h00,
+				  8'h00
+				  })
+			 .in_byte({
+				   add,
+				   subtract,
+				   shift_r,
+				   shift_l
+				   andg,
+				   org,
+				   notg,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00,
+				   8'h00
+				   })
+			 .sel(selector),
+			 .out_bit(out_combo_c),
+			 .out_byte(out_combo)
+			 );
+   
 
    always @(posedge clk) begin
         if (reset) begin
