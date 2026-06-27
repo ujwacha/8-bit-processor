@@ -2,6 +2,12 @@
 #+Author: Ujwol Acharya (079BCT092)
 #+PROPERTY: 
 
+* Student's Introduction
+|---------------+-----------------|
+| *Name*        | *Ujwol Acharya* |
+| *Roll Number* | *079BCT092*     |
+|---------------+-----------------|
+
 * Introduction
 This whole project is a lab work for Elective 1 FPGA of my univeristy.
 
