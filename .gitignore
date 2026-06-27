@@ -1,2 +1,6 @@
 /obj_dir/
 /adder.vcd
+/README.org~
+/sim/tb_mem.cpp~
+/src/alu/alu_dataflow.v~
+/src/alu/four_bit_mux.v~
