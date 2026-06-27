@@ -1,15 +1,19 @@
-SOURCES := src/alu/eight_bit_adder.v \
-	   src/alu/eight_bit_subtractor.v \
-           src/alu/four_bit_adder.v \
-           src/alu/full_adder.v \
-           src/alu/half_adder.v \
-	   src/alu/equal_to.v \
-	   src/alu/less_than.v \
-	   src/alu/shifter.v \
-	   src/alu/alu.v
+# SOURCES := src/alu/eight_bit_adder.v \
+# 	   src/alu/eight_bit_subtractor.v \
+#            src/alu/four_bit_adder.v \
+#            src/alu/full_adder.v \
+#            src/alu/half_adder.v \
+# 	   src/alu/equal_to.v \
+# 	   src/alu/less_than.v \
+# 	   src/alu/shifter.v \
+# 	   src/alu/alu.v \
+# 	   src/alu/four_bit_mux.v \
+# 	   src/alu/alu_dataflow.v
 
-TESTBENCH := sim/tb_alu.cpp
-TOP_MODULE := alu
+SOURCES := src/memory/memory.v
+
+TESTBENCH := sim/tb_mem.cpp
+TOP_MODULE := memory
 
 INCLUDES :=
 
