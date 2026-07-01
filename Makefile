@@ -10,10 +10,10 @@
 # 	   src/alu/four_bit_mux.v \
 # 	   src/alu/alu_dataflow.v
 
-SOURCES := src/memory/memory.v
+SOURCES := src/registers/register_bank.v
 
-TESTBENCH := sim/tb_mem.cpp
-TOP_MODULE := memory
+TESTBENCH := sim/tb_reg_bank.cpp
+TOP_MODULE := register_bank
 
 INCLUDES :=
 

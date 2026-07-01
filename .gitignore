@@ -4,3 +4,6 @@
 /sim/tb_mem.cpp~
 /src/alu/alu_dataflow.v~
 /src/alu/four_bit_mux.v~
+/sim/tb_reg_bank.cpp~
+/src/registers/register-bank.v~
+/src/registers/register_bank.v~
