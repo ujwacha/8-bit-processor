@@ -10,10 +10,10 @@
 # 	   src/alu/four_bit_mux.v \
 # 	   src/alu/alu_dataflow.v
 
-SOURCES := src/registers/register_bank.v
+SOURCES := src/control/control_unit.v
 
-TESTBENCH := sim/tb_reg_bank.cpp
-TOP_MODULE := register_bank
+TESTBENCH := sim/tb_cu.cpp
+TOP_MODULE := control_unit
 
 INCLUDES :=
 

@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
 	top->r2 = i;
 	top->r3 = j;
 	top->r1 = 0;
+	top->r_ch = 0;
 	top->f_ch = 0;
 	top->r_in = 0;
 	top->flg_in = 0;
@@ -95,7 +96,7 @@ int main(int argc, char** argv) {
 	  print_binary(top->out_b);
 	  std::cout << "###############################" << std::endl;
 	}
-
+	
 	DUMP_WAVE;
     }
   }
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
 	top->r2 = 0;
 	top->r3 = 0;
 	top->r1 = i;
+	top->r_ch = 1;
 	top->f_ch = 0;
 	top->r_in = i + 1;
 	top->flg_in = 0;
@@ -136,6 +138,7 @@ int main(int argc, char** argv) {
 	top->r2 = i;
 	top->r3 = 0;
 	top->r1 = 0;
+	top->r_ch = 0;
 	top->f_ch = 0;
 	top->r_in = 0;
 	top->flg_in = 0;
@@ -188,6 +191,7 @@ int main(int argc, char** argv) {
     top->r2 = 0;
     top->r3 = 0;
     top->r1 = 0;
+    top->r_ch = 0;
     top->f_ch = 1;
     top->r_in = 0;
     top->flg_in = i;

@@ -111,6 +111,10 @@ module alu(input	    clk,
                out_combo   = 8'h00;
                out_combo_c = lt_out;
             end
+	    4'h9: begin
+	       out_combo = a;
+	       out_combo_c = 1'b0;
+	    end
             default: begin
                out_combo   = 8'h00;
                out_combo_c = 1'b0;

@@ -1,0 +1,209 @@
+#include <verilated.h>
+#include <verilated_vcd_c.h>
+#include "Vcu.h"
+
+#include <iostream>
+#include <cstdint>
+#include <vector>
+
+#define DUMP_WAVE if (dump_waves) { \
+    tfp->dump(timestamp);           \
+    timestamp += 10;                \
+}
+
+void print_binary(uint8_t value) {
+    for (int i = 7; i >= 0; i--) {
+        std::cout << ((value >> i) & 0x01);
+        if (i % 4 == 0 && i != 0) std::cout << " ";
+    }
+    std::cout << std::endl;
+}
+
+int main(int argc, char** argv) {
+    Verilated::commandArgs(argc, argv);
+
+    Vcu* top = new Vcu;
+    VerilatedVcdC* tfp = nullptr;
+    bool dump_waves = true;
+
+    if (dump_waves) {
+        Verilated::traceEverOn(true);
+        tfp = new VerilatedVcdC;
+        top->trace(tfp, 99);
+        tfp->open("cu.vcd");
+    }
+
+    uint64_t timestamp = 0;
+    uint32_t total_tests = 0;
+    uint32_t pass_count = 0;
+    uint32_t fail_count = 0;
+
+    std::cout << "###################" << std::endl;
+    std::cout << "##### TESTING CU #####" << std::endl;
+    std::cout << "###################" << std::endl;
+
+    // Helper to apply a single clock cycle (low then high)
+    auto tick = [&]() {
+        top->clk = 0;
+        top->eval();
+        DUMP_WAVE;
+        top->clk = 1;
+        top->eval();
+        DUMP_WAVE;
+    };
+
+    // Helper to check output signals against expected values
+    auto check = [&](const std::string& test_name, bool condition) {
+        total_tests++;
+        if (condition) {
+            pass_count++;
+            std::cout << "[PASS] " << test_name << std::endl;
+        } else {
+            fail_count++;
+            std::cout << "[FAIL] " << test_name << std::endl;
+        }
+    };
+
+    // ---------- Test 1: Reset ----------
+    std::cout << "\n--- Test: Reset ---" << std::endl;
+    top->rst = 1;
+    top->clk = 0;
+    top->data_line = 0;
+    top->eval();
+    DUMP_WAVE;
+    top->clk = 1;
+    top->eval();
+    DUMP_WAVE;
+    top->rst = 0;
+
+    check("Reset: addr_line = 0", top->addr_line == 0);
+    check("Reset: mem_read = 0", top->mem_read == 0);
+    check("Reset: mem_write = 0", top->mem_write == 0);
+    check("Reset: reg_write = 0", top->reg_write == 0);
+
+    // ---------- Test 2: Instruction without immediate ----------
+    // Instruction: 0x12 0x19
+    // Byte0: alu_op=0001, imme_flag=0, dest=010 => 0x12
+    // Byte1: jmp_flag=0, op1=011, op2=001 => 0b0_011_001 = 0x19
+    std::cout << "\n--- Test: 2-byte instruction (no immediate) ---" << std::endl;
+    {
+        // State 0: read first byte at PC=0
+        top->data_line = 0x12;
+        tick(); // posedge: state moves to 1, PC becomes 1, mem_read=1
+        check("State0: addr_line=0", top->addr_line == 0);
+        check("State0: mem_read=1", top->mem_read == 1);
+
+        // State 1: read second byte at PC=1
+        top->data_line = 0x19;
+        tick(); // posedge: state moves to 2, PC becomes 2, mem_read=1
+        check("State1: addr_line=1", top->addr_line == 1);
+        check("State1: mem_read=1", top->mem_read == 1);
+
+        // State 2: no immediate, so go back to state 0, PC becomes 3? Wait: in state 2 they do pc <= pc + 1; so after this tick, PC should be 3? Actually in state 2 they do pc <= pc + 1; (after latching op1/op2). Then if ~imme_flag, fetch_state <= 3'b000. So after this state, PC should be 3.
+        tick(); // posedge: state goes to 0, PC becomes 3
+        check("State2: addr_line=2", top->addr_line == 2); // addr_line is set to pc before increment? In state 2 they set addr_line <= pc; then pc <= pc+1. So during this state, addr_line should be old PC=2.
+        check("State2: mem_read=1", top->mem_read == 1); // mem_read is asserted in state 2 as well.
+
+        // Now we are back to state 0, but we don't have another instruction; we can just check that mem_read stays 1? Actually at the beginning of next cycle, it will read again. We'll just check that PC is 3.
+        // To see the effect, we can do one more tick with dummy data.
+        top->data_line = 0xFF; // dummy
+        tick(); // posedge: state 0 again, PC becomes 4? Actually state 0 does pc<=pc+1, so PC becomes 4.
+        check("After fetch: PC=4", top->addr_line == 3); // addr_line set to PC before increment, so should be 3.
+    }
+
+    // ---------- Test 3: Instruction with immediate ----------
+    // Instruction: 0x2C 0x00 0xAA 0xBB
+    // Byte0: alu_op=0010, imme_flag=1, dest=100 => 0x2C
+    // Byte1: jmp_flag=0, op1=000, op2=000 => 0x00
+    // Byte2: imme_reg_1 = 0xAA
+    // Byte3: imme_reg_2 = 0xBB
+    std::cout << "\n--- Test: 4-byte instruction (with immediate) ---" << std::endl;
+    {
+        // Reset again to start from PC=0
+        top->rst = 1;
+        tick();
+        top->rst = 0;
+        tick(); // ensure reset is deasserted
+
+        // State 0: read first byte
+        top->data_line = 0x2C;
+        tick();
+        check("State0: addr_line=0", top->addr_line == 0);
+        check("State0: mem_read=1", top->mem_read == 1);
+
+        // State 1: read second byte
+        top->data_line = 0x00;
+        tick();
+        check("State1: addr_line=1", top->addr_line == 1);
+        check("State1: mem_read=1", top->mem_read == 1);
+
+        // State 2: imme_flag=1, so go to state 3, PC becomes 3? Actually state 2 does pc<=pc+1; so after this tick, PC=3.
+        tick(); // state 2, data_line is still 0x00? Actually in state 2 we don't read new data, but we already have data_line from previous cycle; but state 2 uses data_line to latch jmp_flag, op1, op2. So we should set data_line to the second byte before this tick. We already set it to 0x00, that's correct.
+        check("State2: addr_line=2", top->addr_line == 2);
+        check("State2: mem_read=1", top->mem_read == 1);
+
+        // State 3: read first immediate byte
+        top->data_line = 0xAA;
+        tick(); // state 3, PC becomes 4
+        check("State3: addr_line=3", top->addr_line == 3);
+        check("State3: mem_read=1", top->mem_read == 1);
+
+        // State 4: read second immediate byte
+        top->data_line = 0xBB;
+        tick(); // state 4, PC becomes 5, then goes to state 0
+        check("State4: addr_line=4", top->addr_line == 4);
+        check("State4: mem_read=1", top->mem_read == 1);
+
+        // Now back to state 0, PC=5. We'll do a dummy tick to see PC=6.
+        top->data_line = 0xFF;
+        tick();
+        check("After immediate fetch: PC=6", top->addr_line == 5);
+    }
+
+    // ---------- Additional check: reset during fetch ----------
+    std::cout << "\n--- Test: Reset during operation ---" << std::endl;
+    {
+        // Start a fetch, then assert reset
+        top->rst = 1;
+        tick();
+        top->rst = 0;
+        tick(); // start from PC=0
+
+        top->data_line = 0x12;
+        tick(); // state0
+        top->data_line = 0x19;
+        tick(); // state1
+
+        // Now assert reset in the middle of state2
+        top->rst = 1;
+        tick(); // reset takes effect
+        check("Reset during fetch: addr_line=0", top->addr_line == 0);
+        check("Reset during fetch: mem_read=0", top->mem_read == 0);
+        check("Reset during fetch: mem_write=0", top->mem_write == 0);
+        check("Reset during fetch: reg_write=0", top->reg_write == 0);
+
+        top->rst = 0;
+        tick(); // deassert reset, now should be back to state0
+        top->data_line = 0x22;
+        tick(); // should start fetching from PC=0 again
+        check("After reset: addr_line=0", top->addr_line == 0);
+        check("After reset: mem_read=1", top->mem_read == 1);
+    }
+
+    // ---------- Summary ----------
+    std::cout << "\n###################" << std::endl;
+    std::cout << "###### STATS ######" << std::endl;
+    std::cout << "###################" << std::endl;
+    std::cout << "total_tests: " << total_tests << std::endl;
+    std::cout << "pass_count: " << pass_count << std::endl;
+    std::cout << "fail_count: " << fail_count << std::endl;
+
+    if (dump_waves) {
+        tfp->close();
+        delete tfp;
+        std::cout << "Waveform saved to cu.vcd" << std::endl;
+    }
+
+    delete top;
+    return (fail_count == 0) ? 0 : 1;
+}

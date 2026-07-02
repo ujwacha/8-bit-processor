@@ -7,3 +7,5 @@
 /sim/tb_reg_bank.cpp~
 /src/registers/register-bank.v~
 /src/registers/register_bank.v~
+/src/control/control_unit.v~
+/src/control/cu.v~

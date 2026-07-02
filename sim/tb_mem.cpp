@@ -40,13 +40,14 @@ int main(int argc, char** argv) {
   std::cout << "###################" << std::endl;
 
   std::cout << "##### [TESTING] memory #####" << std::endl;
-  for (uint16_t i = 0; i <= 255; i++) {
+  for (uint32_t i = 0; i <= 65535; i++) {
     total_tests += 1;
+    top->cs = 1;
     
     top->clk = 0;
     top->rst = 0;
     top->adr = i;
-    top->data_in = i;
+    top->data_in = (uint8_t) (i & 0x00FF);
     top->read = 0;
     top->eval();
     
@@ -81,7 +82,7 @@ int main(int argc, char** argv) {
     
     // test for validity
 
-    uint8_t valid_out = i;
+    uint8_t valid_out = (uint8_t) (i & 0x00FF);
 
     if (valid_out == top->out) {
       pass_count += 1;
@@ -96,7 +97,6 @@ int main(int argc, char** argv) {
       tfp->dump(timestamp);
       timestamp += 10;
     }
-	
   }
 
  END:
